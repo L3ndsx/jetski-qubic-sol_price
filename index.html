@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphique avec Chart.js</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <canvas id="solPriceChart" width="400" height="200"></canvas>
+
+    <script>
+        // Fonction pour charger les données JSON
+        async function loadData() {
+            const response = await fetch('http://localhost:8000/data.json');  // Assurez-vous que le fichier 'data.json' est dans le même répertoire ou mettez un chemin correct
+            const data = await response.json();  // Récupère les données JSON
+
+            // Initialiser les labels pour l'axe des X (en général, c'est la même chose pour toutes les clés)
+            let labels = [];
+            let datasets = [];
+
+            // Parcourir toutes les clés (comme "138", "139", etc.)
+            for (let key in data) {
+                let prices = [];
+                let timeLabels = [];
+
+                // Extraire les données pour chaque clé
+                const entries = data[key];
+                entries.forEach(entry => {
+                    timeLabels.push(new Date(entry.timestamp).toLocaleTimeString());  // Convertir le timestamp en heure lisible
+                    prices.push(entry.sol_price);  // Extraire les prix
+                });
+
+                // Ajouter chaque dataset (ensemble de données) pour chaque clé dans le tableau datasets
+                datasets.push({
+                    label: `Clé ${key}`,  // Ajouter un label basé sur la clé
+                    data: prices,  // Données des prix
+                    borderColor: getRandomColor(),  // Couleur aléatoire pour chaque dataset
+                    borderWidth: 1,
+                    fill: false
+                });
+
+                // Assigner les labels pour l'axe des X (temps), s'ils sont encore vides
+                if (labels.length === 0) {
+                    labels = timeLabels;
+                }
+            }
+
+            // Créer le graphique avec Chart.js
+            const ctx = document.getElementById('solPriceChart').getContext('2d');
+            const solPriceChart = new Chart(ctx, {
+                type: 'line', // Type de graphique (ici, une ligne)
+                data: {
+                    labels: labels, // Labels extraits des timestamps
+                    datasets: datasets  // Tous les jeux de données
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Temps'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Prix SOL (en $)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fonction pour générer une couleur aléatoire pour chaque clé
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Charger les données et afficher le graphique
+        loadData();
+    </script>
+</body>
+</html>
